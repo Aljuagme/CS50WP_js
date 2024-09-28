@@ -1,0 +1,79 @@
+textarea {
+    min-height: 400px;
+}
+/* Container for the archive button and email content */
+.email-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* Email item styling */
+.email-item {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.email-item:hover {
+  background-color: #f9f9f9;
+}
+
+/* Archive button */
+.archive-btn {
+  margin-right: 10px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.archive-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Styles for the email row */
+.email-row {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Styles for the sender section (left-aligned) */
+.email-sender {
+  flex: 1;
+  max-width: 200px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Styles for the body section (center-aligned) */
+.email-body {
+  flex: 2;
+  padding: 0 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #555;
+}
+
+/* Styles for the timestamp section (right-aligned) */
+.email-timestamp {
+  flex: 0;
+  white-space: nowrap;
+  font-size: 0.85em;
+  color: #999;
+}
+
+/* Unread emails get highlighted */
+.notRead {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
