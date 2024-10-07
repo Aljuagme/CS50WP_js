@@ -1,41 +1,156 @@
-{% extends "mail/layout.html" %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <script src="https://unpkg.com/react@17/umd/react.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" crossorigin></script>
+        <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+        <link rel="stylesheet" href="/static/mail/styles.css">
+        <title>Mail</title>
 
-{% block body %}
-    <h2>{{ request.user.email }}</h2>
+        <script>
+            window.loggedInUserEmail = "{{ user_email }}";
+        </script>
+    </head>
+    <body>
+        <div id="App"></div>
 
-    <button class="btn btn-sm btn-outline-primary" id="inbox">Inbox</button>
-    <button class="btn btn-sm btn-outline-primary" id="compose">Compose</button>
-    <button class="btn btn-sm btn-outline-primary" id="sent">Sent</button>
-    <button class="btn btn-sm btn-outline-primary" id="archived">Archived</button>
-    <a class="btn btn-sm btn-outline-primary" href="{% url 'logout' %}">Log Out</a>
-    <hr>
+        <script type="text/babel">
 
-    <div id="emails-view">
-    </div>
+            function App() {
+                const userEmail = window.loggedInUserEmail;
 
-    <div id="compose-view">
-        <h3>New Email</h3>
-        <form id="compose-form" onsubmit="send_email()">
-            <div class="form-group">
-                From: <input disabled class="form-control" value="{{ request.user.email }}">
-            </div>
-            <div class="form-group">
-                To: <input id="compose-recipients" class="form-control">
-            </div>
-            <div class="form-group">
-                <input class="form-control" id="compose-subject" placeholder="Subject">
-            </div>
-            <textarea class="form-control" id="compose-body" placeholder="Body"></textarea>
-            <input type="submit" class="btn btn-primary"/>
-        </form>
-    </div>
-    
-    <div id="content-view">
-    
-    </div>
-{% endblock %}
+                const [currentView, setCurrentView] = React.useState({
+                    mailbox: "inbox"
+                });
 
-{% block script %}
-    <script src="{% static 'mail/inbox.js' %}"></script>
-{% endblock %}
+                const [emails, setEmails] = React.useState([]);
+                
+
+                
+                const handleView = (mailbox) => {
+                    setCurrentView({
+                        mailbox: mailbox
+                    })
+                }
+
+                const Navbar = () => {
+                    return (
+                        <div className="navbar">
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => handleView("inbox")}>Inbox</button>
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => handleView("compose")}>Compose</button>
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => handleView("sent")}>Sent</button>
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => handleView("archive")}>Archived</button>
+                            <a className="btn btn-sm btn-outline-primary" href="/logout">Log Out</a>
+                            <hr />
+                        </div>
+                    );
+                };
+
+                const renderEmails = () => {
+                    React.useEffect(() => {
+                    fetch(`/emails/${currentView.mailbox}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                console.log(currentView.mailbox)
+                                throw new Error("Network response was not ok");
+                            }
+                            return response.json()
+                        })
+                        .then(data => {
+                            console.log(data);
+                            setEmails(data);
+                            console.log(emails)
+                        })
+                        .catch(error => {
+                            console.error("There was a problem while fetching", error);
+                        });
+                    }, [currentView]);
+
+                    const handleEmailClick = (email_id) => {
+                        setSelectedEmailID(email_id)
+                    }
+
+
+                    return (
+                        <div>
+                            {emails.map(
+                                email => (
+                                    <div className={email.read ? "email-item" : "email-item notRead"}>
+                                        <div className="email-container">
+                                            <button className="archive-btn">{email.archived ? "Unarchived" : "Archived"}</button>
+                                            <div className="email-row" onClick={() => handleEmailClick(email.id)}>
+                                                <p><strong>{currentView.mailbox === "mailbox" ? email.sender : email.recipients}</strong></p>
+                                                <div className="email-sender"><strong>{email.user}</strong></div>
+                                                <div className="email-body">{email.body}</div>
+                                                <div className="email-timestamp">{email.timestamp}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ))}
+                        </div>
+                    );
+                };
+
+                const renderEmail = ({email_id}) => {
+                    const [selectedEmail, setSelectedEmail] = React.useState([]);
+
+                    React.useEffect(() => {
+                        fetch(`/emails/${email_id}`)
+                            .then(r => {
+                                if (!r.ok) {
+                                    throw new Error(`Response while fetching id: ${email_id} raised an error.`)
+                                }
+                                return r.json()
+                            })
+                            .then(email => {
+                                    console.log(email);
+                                    setSelectedEmail(email);
+                                }
+                            ).catch(error => {
+                            console.log("Error when setting selected email", error);
+                        });
+                    }, [email_id]);
+
+                    return (
+                        <div>
+                            <p><strong>From: </strong>{selectedEmail.sender}</p>
+                            <p><strong>To: </strong>{selectedEmail.recipients}</p>
+                            <p><strong>Subject: </strong>{selectedEmail.subject}</p>
+                            <p><strong>Timestamp: </strong>{selectedEmail.timestamp}</p>
+                            <br/>
+                            <button>Reply</button>
+                            <hr/>
+                            <p>{selectedEmail.body}</p>
+                        </div>
+                    );
+                }
+
+                return (
+                    // Navbar
+                    <div>
+                        <h2>{currentView.mailbox === "compose" ? email.sender : userEmail}</h2>
+                        {Navbar()}
+                        <hr />
+
+                        {currentView.mailbox === "compose" ? (
+                            console.log("Hello, I am compose")
+                        ) : (
+                            renderEmails()
+                            )
+                        }
+
+                    </div>
+
+                    // Content
+
+                );
+
+
+
+            }
+
+            ReactDOM.render(<App />, document.querySelector("#App"));
+        </script>
+    </body>
+</html>
